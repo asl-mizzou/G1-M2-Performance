@@ -116,6 +116,9 @@ class G1Conductor:
         self.low_state = unitree_hg_msg_dds__LowState_()
         self.crc = CRC()
 
+        # State tracking
+        self.first_state_received = False
+
         # Publishers and subscribers
         self.low_cmd_publisher = ChannelPublisher("rt/lowcmd", LowCmd_)
         self.low_cmd_publisher.Init()
@@ -204,6 +207,25 @@ class G1Conductor:
     def _state_callback(self, msg: LowState_):
         """Callback to receive robot state"""
         self.low_state = msg
+        if not self.first_state_received:
+            self.first_state_received = True
+
+    def _get_current_arm_positions(self):
+        """
+        Read current arm joint positions from robot state.
+
+        Returns:
+            Dictionary with current joint positions
+        """
+        return {
+            'shoulder_pitch': self.low_state.motor_state[G1JointIndex.RightShoulderPitch].q,
+            'shoulder_roll': self.low_state.motor_state[G1JointIndex.RightShoulderRoll].q,
+            'shoulder_yaw': self.low_state.motor_state[G1JointIndex.RightShoulderYaw].q,
+            'elbow': self.low_state.motor_state[G1JointIndex.RightElbow].q,
+            'wrist_roll': self.low_state.motor_state[G1JointIndex.RightWristRoll].q,
+            'wrist_pitch': self.low_state.motor_state[G1JointIndex.RightWristPitch].q,
+            'wrist_yaw': self.low_state.motor_state[G1JointIndex.RightWristYaw].q
+        }
 
     def _interpolate_positions(self, pos1, pos2, ratio):
         """
@@ -311,15 +333,23 @@ class G1Conductor:
     def start(self):
         """Start conducting"""
         print("\nPreparing to conduct...")
+
+        # Wait for first state update
+        print("Waiting for robot state data...")
+        while not self.first_state_received:
+            time.sleep(0.1)
+        print("Robot state received!")
+
         print("Moving to starting position...")
 
-        # Initialize to rest position for 2 seconds
+        # Read current position and move to beat4 (upbeat starting position)
+        current_pos = self._get_current_arm_positions()
         self.start_time = time.time()
         init_duration = 2.0
 
         while time.time() - self.start_time < init_duration:
             ratio = (time.time() - self.start_time) / init_duration
-            target_pos = self._interpolate_positions(self.rest_position, self.beat4_position, ratio)
+            target_pos = self._interpolate_positions(current_pos, self.beat4_position, ratio)
             self._set_arm_position(target_pos)
             self.low_cmd.crc = self.crc.Crc(self.low_cmd)
             self.low_cmd_publisher.Write(self.low_cmd)
@@ -357,8 +387,8 @@ class G1Conductor:
         return_duration = 2.0
         start_time = time.time()
 
-        # Get current position (approximate from last beat)
-        current_pos = self.beat_positions[0]
+        # Read current position from robot
+        current_pos = self._get_current_arm_positions()
 
         while time.time() - start_time < return_duration:
             ratio = (time.time() - start_time) / return_duration

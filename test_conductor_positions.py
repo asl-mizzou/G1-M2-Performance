@@ -96,6 +96,9 @@ class PositionTester:
         self.low_state = unitree_hg_msg_dds__LowState_()
         self.crc = CRC()
 
+        # State tracking
+        self.first_state_received = False
+
         # Publishers and subscribers
         self.low_cmd_publisher = ChannelPublisher("rt/lowcmd", LowCmd_)
         self.low_cmd_publisher.Init()
@@ -158,6 +161,25 @@ class PositionTester:
     def _state_callback(self, msg: LowState_):
         """Callback to receive robot state"""
         self.low_state = msg
+        if not self.first_state_received:
+            self.first_state_received = True
+
+    def _get_current_arm_positions(self):
+        """
+        Read current arm joint positions from robot state.
+
+        Returns:
+            Dictionary with current joint positions
+        """
+        return {
+            'shoulder_pitch': self.low_state.motor_state[G1JointIndex.RightShoulderPitch].q,
+            'shoulder_roll': self.low_state.motor_state[G1JointIndex.RightShoulderRoll].q,
+            'shoulder_yaw': self.low_state.motor_state[G1JointIndex.RightShoulderYaw].q,
+            'elbow': self.low_state.motor_state[G1JointIndex.RightElbow].q,
+            'wrist_roll': self.low_state.motor_state[G1JointIndex.RightWristRoll].q,
+            'wrist_pitch': self.low_state.motor_state[G1JointIndex.RightWristPitch].q,
+            'wrist_yaw': self.low_state.motor_state[G1JointIndex.RightWristYaw].q
+        }
 
     def _interpolate_positions(self, pos1, pos2, ratio):
         """
@@ -222,14 +244,25 @@ class PositionTester:
             print(f"Error: Unknown position '{position_name}'")
             return False
 
+        # Wait for first state update
+        print("Waiting for robot state data...")
+        while not self.first_state_received:
+            time.sleep(0.1)
+        print("Robot state received!")
+
         target_pos = self.positions[position_name]
-        start_pos = self.positions['rest']  # Always start from rest
+        # Read current positions from robot
+        start_pos = self._get_current_arm_positions()
 
         print(f"\nMoving to position: {position_name}")
         print(f"Transition time: {duration}s, Hold time: {hold_time}s")
         print("-" * 60)
 
-        # Display joint angles
+        # Display current and target joint angles
+        print("\nCurrent joint positions (radians):")
+        for joint, angle in start_pos.items():
+            print(f"  {joint:20s}: {angle:6.3f} rad ({angle * 57.2958:6.1f}°)")
+
         print("\nTarget joint angles (radians):")
         for joint, angle in target_pos.items():
             print(f"  {joint:20s}: {angle:6.3f} rad ({angle * 57.2958:6.1f}°)")
@@ -273,8 +306,8 @@ class PositionTester:
         """
         print("\nReturning to rest position...")
 
-        # Get approximate current position (we'll use beat1 as a safe estimate)
-        start_pos = self.positions['beat1']
+        # Read current position from robot
+        start_pos = self._get_current_arm_positions()
         target_pos = self.positions['rest']
 
         start_time = time.time()
