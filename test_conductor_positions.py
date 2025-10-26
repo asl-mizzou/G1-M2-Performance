@@ -52,26 +52,31 @@ class G1JointIndex:
 
     # Waist
     WaistYaw = 12
+    WaistRoll = 13
+    WaistA = 13
+    WaistPitch = 14
+    WaistB = 14
 
     # Left arm
-    LeftShoulderPitch = 13
-    LeftShoulderRoll = 14
-    LeftShoulderYaw = 15
-    LeftElbowPitch = 16
-    LeftElbowRoll = 17
-    LeftWristYaw = 18
+    LeftShoulderPitch = 15
+    LeftShoulderRoll = 16
+    LeftShoulderYaw = 17
+    LeftElbow = 18
     LeftWristRoll = 19
     LeftWristPitch = 20
+    LeftWristYaw = 21
 
     # Right arm
-    RightShoulderPitch = 21
-    RightShoulderRoll = 22
-    RightShoulderYaw = 23
-    RightElbowPitch = 24
-    RightElbowRoll = 25
-    RightWristYaw = 26
-    RightWristRoll = 27
-    RightWristPitch = 28
+    RightShoulderPitch = 22
+    RightShoulderRoll = 23
+    RightShoulderYaw = 24
+    RightElbow = 25
+    RightWristRoll = 26
+    RightWristPitch = 27
+    RightWristYaw = 28
+
+    # Special index for arm control enable/disable
+    kNotUsedJoint = 29
 
 
 class PositionTester:
@@ -104,51 +109,46 @@ class PositionTester:
                 'shoulder_pitch': 0.0,
                 'shoulder_roll': 0.0,
                 'shoulder_yaw': 0.0,
-                'elbow_pitch': 0.0,
-                'elbow_roll': 0.0,
-                'wrist_yaw': 0.0,
+                'elbow': 0.0,
                 'wrist_roll': 0.0,
-                'wrist_pitch': 0.0
+                'wrist_pitch': 0.0,
+                'wrist_yaw': 0.0
             },
             'beat1': {  # Down (downbeat)
                 'shoulder_pitch': 0.8,
                 'shoulder_roll': -0.2,
                 'shoulder_yaw': 0.0,
-                'elbow_pitch': 1.2,
-                'elbow_roll': 0.0,
-                'wrist_yaw': 0.0,
+                'elbow': 1.2,
                 'wrist_roll': 0.0,
-                'wrist_pitch': -0.3
+                'wrist_pitch': -0.3,
+                'wrist_yaw': 0.0
             },
             'beat2': {  # Left
                 'shoulder_pitch': 0.3,
                 'shoulder_roll': 0.5,
                 'shoulder_yaw': -0.3,
-                'elbow_pitch': 1.0,
-                'elbow_roll': 0.0,
-                'wrist_yaw': 0.0,
+                'elbow': 1.0,
                 'wrist_roll': 0.0,
-                'wrist_pitch': -0.2
+                'wrist_pitch': -0.2,
+                'wrist_yaw': 0.0
             },
             'beat3': {  # Right
                 'shoulder_pitch': 0.3,
                 'shoulder_roll': -0.5,
                 'shoulder_yaw': 0.3,
-                'elbow_pitch': 1.0,
-                'elbow_roll': 0.0,
-                'wrist_yaw': 0.0,
+                'elbow': 1.0,
                 'wrist_roll': 0.0,
-                'wrist_pitch': -0.2
+                'wrist_pitch': -0.2,
+                'wrist_yaw': 0.0
             },
             'beat4': {  # Up (upbeat)
                 'shoulder_pitch': -0.3,
                 'shoulder_roll': -0.2,
                 'shoulder_yaw': 0.0,
-                'elbow_pitch': 0.8,
-                'elbow_roll': 0.0,
-                'wrist_yaw': 0.0,
+                'elbow': 0.8,
                 'wrist_roll': 0.0,
-                'wrist_pitch': 0.0
+                'wrist_pitch': 0.0,
+                'wrist_yaw': 0.0
             }
         }
 
@@ -183,20 +183,21 @@ class PositionTester:
         Args:
             position_dict: Dictionary with joint positions
         """
+        # Enable arm SDK control
+        self.low_cmd.motor_cmd[G1JointIndex.kNotUsedJoint].q = 1.0
+
         # Right arm joints
         joints = [
             (G1JointIndex.RightShoulderPitch, 'shoulder_pitch'),
             (G1JointIndex.RightShoulderRoll, 'shoulder_roll'),
             (G1JointIndex.RightShoulderYaw, 'shoulder_yaw'),
-            (G1JointIndex.RightElbowPitch, 'elbow_pitch'),
-            (G1JointIndex.RightElbowRoll, 'elbow_roll'),
-            (G1JointIndex.RightWristYaw, 'wrist_yaw'),
+            (G1JointIndex.RightElbow, 'elbow'),
             (G1JointIndex.RightWristRoll, 'wrist_roll'),
-            (G1JointIndex.RightWristPitch, 'wrist_pitch')
+            (G1JointIndex.RightWristPitch, 'wrist_pitch'),
+            (G1JointIndex.RightWristYaw, 'wrist_yaw')
         ]
 
         for joint_idx, joint_name in joints:
-            self.low_cmd.motor_cmd[joint_idx].mode = 0x01  # Enable control
             self.low_cmd.motor_cmd[joint_idx].q = position_dict[joint_name]
             self.low_cmd.motor_cmd[joint_idx].dq = 0.0
             self.low_cmd.motor_cmd[joint_idx].kp = self.kp
@@ -284,9 +285,8 @@ class PositionTester:
             self._publish_command()
             time.sleep(self.control_dt)
 
-        # Disable arm control
-        for i in range(G1JointIndex.RightShoulderPitch, G1JointIndex.RightWristPitch + 1):
-            self.low_cmd.motor_cmd[i].mode = 0x00
+        # Disable arm SDK control
+        self.low_cmd.motor_cmd[G1JointIndex.kNotUsedJoint].q = 0.0
 
         self._publish_command()
         print("Returned to rest. Arm control disabled.")
