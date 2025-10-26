@@ -17,7 +17,7 @@ import sys
 
 # Import Unitree SDK components
 try:
-    from unitree_sdk2py.core.channel import ChannelPublisher, ChannelSubscriber
+    from unitree_sdk2py.core.channel import ChannelPublisher, ChannelSubscriber, ChannelFactoryInitialize
     from unitree_sdk2py.idl.default import unitree_hg_msg_dds__LowCmd_
     from unitree_sdk2py.idl.default import unitree_hg_msg_dds__LowState_
     from unitree_sdk2py.idl.unitree_hg.msg.dds_ import LowCmd_, LowState_
@@ -408,6 +408,13 @@ def main():
     print("=" * 60)
 
     input("\nPress Enter to continue...")
+
+    # Initialize DDS system
+    print("\nInitializing DDS communication system...")
+    if len(sys.argv) > 1:
+        ChannelFactoryInitialize(0, sys.argv[1])
+    else:
+        ChannelFactoryInitialize(0)
 
     try:
         tester = PositionTester()

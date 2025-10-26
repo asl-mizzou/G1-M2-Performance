@@ -26,7 +26,7 @@ import numpy as np
 
 # Import Unitree SDK components
 try:
-    from unitree_sdk2py.core.channel import ChannelPublisher, ChannelSubscriber
+    from unitree_sdk2py.core.channel import ChannelPublisher, ChannelSubscriber, ChannelFactoryInitialize
     from unitree_sdk2py.idl.default import unitree_hg_msg_dds__LowCmd_
     from unitree_sdk2py.idl.default import unitree_hg_msg_dds__LowState_
     from unitree_sdk2py.idl.unitree_hg.msg.dds_ import LowCmd_, LowState_
@@ -423,6 +423,14 @@ def main():
     if args.measures is not None and args.measures < 1:
         print("Error: Measures must be at least 1")
         sys.exit(1)
+
+    # Initialize DDS system
+    print("Initializing DDS communication system...")
+    if len(sys.argv) > 1 and not sys.argv[1].startswith('--'):
+        # First arg is network interface (not a flag)
+        ChannelFactoryInitialize(0, sys.argv[1])
+    else:
+        ChannelFactoryInitialize(0)
 
     # Create and run conductor
     conductor = G1Conductor(bpm=args.bpm, measures=args.measures)
