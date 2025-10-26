@@ -35,7 +35,58 @@ pip install unitree_sdk2py
 3. Make the script executable (optional):
 ```bash
 chmod +x g1_conductor.py
+chmod +x test_conductor_positions.py
 ```
+
+## Testing Positions First
+
+**IMPORTANT**: Before running the full conducting script, you should test each arm position individually to ensure they are safe and reachable for your robot.
+
+### Position Testing Script
+
+The `test_conductor_positions.py` script allows you to:
+- Test each beat position individually
+- View position values in radians and degrees
+- Test all positions in sequence
+- Verify clearances and motion ranges
+
+Run the position tester:
+```bash
+python3 test_conductor_positions.py
+```
+
+### Interactive Menu
+
+The tester provides an interactive menu:
+
+```
+1. Rest position (neutral)
+2. Beat 1 - Downbeat (down)
+3. Beat 2 - Second beat (left)
+4. Beat 3 - Third beat (right)
+5. Beat 4 - Upbeat (up)
+6. Test all positions in sequence
+7. Show position values
+0. Exit
+```
+
+### Testing Workflow
+
+**Recommended testing workflow:**
+
+1. Start with option 7 to review all position values
+2. Test the rest position (option 1) to verify neutral state
+3. Test each beat position individually (options 2-5)
+4. Run the full sequence test (option 6)
+5. Once satisfied, proceed to the main conducting script
+
+Each test will:
+- Show the target joint angles
+- Smoothly transition to the position over 3 seconds
+- Hold the position for 3 seconds for inspection
+- Return safely to rest position
+
+**Safety tip**: Watch the robot carefully during each position test. If any position looks unsafe or causes issues, you can press `Ctrl+C` to safely stop and return to rest.
 
 ## Usage
 
@@ -147,7 +198,7 @@ pip install --upgrade unitree_sdk2py
 
 ## Customization
 
-You can customize the conducting pattern by modifying the beat position dictionaries in the `G1Conductor` class:
+You can customize the conducting pattern by modifying the beat position dictionaries in both scripts (`g1_conductor.py` and `test_conductor_positions.py`):
 
 - `beat1_position`: Downbeat position
 - `beat2_position`: Left beat position
@@ -155,6 +206,8 @@ You can customize the conducting pattern by modifying the beat position dictiona
 - `beat4_position`: Upbeat position
 
 Each position is defined by joint angles in radians. Adjust these values to create different conducting styles (e.g., more dramatic gestures, different arm heights, etc.).
+
+**Important**: After modifying positions in `g1_conductor.py`, make sure to also update the same positions in `test_conductor_positions.py` and test them before running the full conducting script.
 
 ## Technical Details
 
