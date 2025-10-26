@@ -18,6 +18,8 @@ import sys
 # Import Unitree SDK components
 try:
     from unitree_sdk2py.core.channel import ChannelPublisher, ChannelSubscriber
+    from unitree_sdk2py.idl.default import unitree_hg_msg_dds__LowCmd_
+    from unitree_sdk2py.idl.default import unitree_hg_msg_dds__LowState_
     from unitree_sdk2py.idl.unitree_hg.msg.dds_ import LowCmd_, LowState_
     from unitree_sdk2py.utils.crc import CRC
 except ImportError:
@@ -85,8 +87,8 @@ class PositionTester:
         self.control_dt = 0.02  # Control loop rate: 50 Hz
 
         # Initialize communication
-        self.low_cmd = LowCmd_()
-        self.low_state = LowState_()
+        self.low_cmd = unitree_hg_msg_dds__LowCmd_()
+        self.low_state = unitree_hg_msg_dds__LowState_()
         self.crc = CRC()
 
         # Publishers and subscribers
