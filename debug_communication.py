@@ -19,6 +19,7 @@ class DebugTester:
         self.low_state = unitree_hg_msg_dds__LowState_()
         self.crc = CRC()
         self.state_count = 0
+        self.mode_machine = 0  # Track robot's mode
 
         # Publishers and subscribers
         self.low_cmd_publisher = ChannelPublisher("rt/lowcmd", LowCmd_)
@@ -33,6 +34,9 @@ class DebugTester:
         """Callback to receive robot state"""
         self.low_state = msg
         self.state_count += 1
+        # Always update mode_machine from robot state
+        self.mode_machine = msg.mode_machine
+
         if self.state_count == 1:
             print(f"✓ First state message received!")
             print(f"  mode_machine: {msg.mode_machine}")
@@ -60,9 +64,11 @@ class DebugTester:
             time.sleep(0.1)
 
         # Set enable flag
-        print("\nSending enable command...")
+        print(f"\nSending enable command with mode_machine={self.mode_machine}...")
         for i in range(50):  # Send for 1 second (50 * 0.02s)
             self.low_cmd.motor_cmd[29].q = 1.0
+            self.low_cmd.mode_pr = 0  # Mode.PR
+            self.low_cmd.mode_machine = self.mode_machine
             self.low_cmd.crc = self.crc.Crc(self.low_cmd)
             self.low_cmd_publisher.Write(self.low_cmd)
             time.sleep(0.02)
@@ -101,6 +107,10 @@ class DebugTester:
             self.low_cmd.motor_cmd[25].kd = 1.5
             self.low_cmd.motor_cmd[25].tau = 0.0
 
+            # Set mode fields
+            self.low_cmd.mode_pr = 0  # Mode.PR
+            self.low_cmd.mode_machine = self.mode_machine
+
             # Send command
             self.low_cmd.crc = self.crc.Crc(self.low_cmd)
             self.low_cmd_publisher.Write(self.low_cmd)
@@ -123,6 +133,8 @@ class DebugTester:
         print("\nDisabling arm control...")
         for i in range(25):
             self.low_cmd.motor_cmd[29].q = 0.0
+            self.low_cmd.mode_pr = 0
+            self.low_cmd.mode_machine = self.mode_machine
             self.low_cmd.crc = self.crc.Crc(self.low_cmd)
             self.low_cmd_publisher.Write(self.low_cmd)
             time.sleep(0.02)
@@ -143,6 +155,8 @@ class DebugTester:
         finally:
             # Disable arm control
             self.low_cmd.motor_cmd[29].q = 0.0
+            self.low_cmd.mode_pr = 0
+            self.low_cmd.mode_machine = self.mode_machine
             self.low_cmd.crc = self.crc.Crc(self.low_cmd)
             self.low_cmd_publisher.Write(self.low_cmd)
 
