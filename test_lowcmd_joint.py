@@ -197,10 +197,12 @@ def main():
     print("Testing rt/lowcmd channel with different gain values")
     print("="*60)
 
-    # Initialize DDS
-    if ChannelFactoryInitialize(0) != 0:
-        print("Failed to initialize DDS")
-        return
+    # Initialize DDS (ignore return value - may already be initialized)
+    ret = ChannelFactoryInitialize(0)
+    if ret != 0:
+        print(f"Note: ChannelFactoryInitialize returned {ret} (may already be initialized)")
+    else:
+        print("DDS initialized successfully")
 
     tester = LowCmdJointTester()
 
