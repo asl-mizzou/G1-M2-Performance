@@ -82,12 +82,12 @@ class DebugTester:
         print("="*60)
 
         # Read current elbow position
-        current_elbow = self.low_state.motor_state[25].q
-        target_elbow = current_elbow + 0.3  # Move 0.3 radians (~17 degrees)
+        initial_elbow = self.low_state.motor_state[25].q
+        target_elbow = initial_elbow + 0.3  # Move 0.3 radians (~17 degrees)
 
-        print(f"Current elbow position: {current_elbow:.3f} rad")
+        print(f"Initial elbow position: {initial_elbow:.3f} rad")
         print(f"Target elbow position:  {target_elbow:.3f} rad")
-        print(f"Movement: {target_elbow - current_elbow:.3f} rad (~{(target_elbow - current_elbow)*57.3:.1f} degrees)")
+        print(f"Movement: {target_elbow - initial_elbow:.3f} rad (~{(target_elbow - initial_elbow)*57.3:.1f} degrees)")
 
         print("\nSending movement commands for 3 seconds...")
         start_time = time.time()
@@ -95,7 +95,12 @@ class DebugTester:
 
         while time.time() - start_time < duration:
             ratio = (time.time() - start_time) / duration
-            current_target = current_elbow + (target_elbow - current_elbow) * ratio
+
+            # Read CURRENT measured position each iteration
+            current_measured = self.low_state.motor_state[25].q
+
+            # Interpolate from current measured position to target
+            current_target = current_measured + (target_elbow - current_measured) * ratio
 
             # Enable arm SDK
             self.low_cmd.motor_cmd[29].q = 1.0
@@ -140,12 +145,93 @@ class DebugTester:
             self.low_cmd_publisher.Write(self.low_cmd)
             time.sleep(0.02)
 
+    def test_all_joints_movement(self):
+        """Test commanding ALL arm joints (hold others, move elbow)"""
+        print("\n" + "="*60)
+        print("TEST: Commanding ALL arm joints together")
+        print("="*60)
+
+        # Define all right arm joints
+        arm_joints = [22, 23, 24, 25, 26, 27, 28]  # All 7 right arm joints
+
+        # Read initial positions
+        initial_positions = {}
+        for joint in arm_joints:
+            initial_positions[joint] = self.low_state.motor_state[joint].q
+
+        # Set elbow target
+        target_elbow = initial_positions[25] + 0.3
+
+        print(f"Initial elbow position: {initial_positions[25]:.3f} rad")
+        print(f"Target elbow position:  {target_elbow:.3f} rad")
+        print("Other joints will hold their current positions")
+
+        print("\nSending movement commands for 3 seconds...")
+        start_time = time.time()
+        duration = 3.0
+
+        while time.time() - start_time < duration:
+            ratio = (time.time() - start_time) / duration
+
+            # Enable arm SDK
+            self.low_cmd.motor_cmd[29].q = 1.0
+
+            # Command all arm joints
+            for joint in arm_joints:
+                self.low_cmd.motor_cmd[joint].mode = 1
+
+                if joint == 25:  # Elbow - move it
+                    current_measured = self.low_state.motor_state[joint].q
+                    target = current_measured + (target_elbow - current_measured) * ratio
+                else:  # Other joints - hold position
+                    target = self.low_state.motor_state[joint].q
+
+                self.low_cmd.motor_cmd[joint].q = target
+                self.low_cmd.motor_cmd[joint].dq = 0.0
+                self.low_cmd.motor_cmd[joint].kp = 60.0
+                self.low_cmd.motor_cmd[joint].kd = 1.5
+                self.low_cmd.motor_cmd[joint].tau = 0.0
+
+            # Set mode fields
+            self.low_cmd.mode_pr = 0
+            self.low_cmd.mode_machine = self.mode_machine
+
+            # Send command
+            self.low_cmd.crc = self.crc.Crc(self.low_cmd)
+            self.low_cmd_publisher.Write(self.low_cmd)
+
+            time.sleep(0.02)
+
+        # Check final position
+        final_elbow = self.low_state.motor_state[25].q
+        print(f"\n✓ Movement complete")
+        print(f"Final elbow position: {final_elbow:.3f} rad")
+        print(f"Expected: {target_elbow:.3f} rad")
+        print(f"Error: {abs(final_elbow - target_elbow):.3f} rad")
+
+        if abs(final_elbow - target_elbow) < 0.1:
+            print("✓ Movement SUCCESSFUL!")
+        else:
+            print("✗ Movement FAILED - joint didn't move as expected")
+
+        # Disable
+        print("\nDisabling arm control...")
+        for i in range(25):
+            self.low_cmd.motor_cmd[29].q = 0.0
+            self.low_cmd.mode_pr = 0
+            self.low_cmd.mode_machine = self.mode_machine
+            self.low_cmd.crc = self.crc.Crc(self.low_cmd)
+            self.low_cmd_publisher.Write(self.low_cmd)
+            time.sleep(0.02)
+
     def run(self):
         """Run all tests"""
         try:
             self.test_enable_flag()
             time.sleep(1)
             self.test_simple_movement()
+            time.sleep(1)
+            self.test_all_joints_movement()
 
             print("\n" + "="*60)
             print("All tests complete!")
