@@ -101,6 +101,7 @@ class DebugTester:
             self.low_cmd.motor_cmd[29].q = 1.0
 
             # Command elbow joint
+            self.low_cmd.motor_cmd[25].mode = 1  # Enable this joint
             self.low_cmd.motor_cmd[25].q = current_target
             self.low_cmd.motor_cmd[25].dq = 0.0
             self.low_cmd.motor_cmd[25].kp = 60.0

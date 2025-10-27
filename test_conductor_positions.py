@@ -222,6 +222,7 @@ class PositionTester:
         ]
 
         for joint_idx, joint_name in joints:
+            self.low_cmd.motor_cmd[joint_idx].mode = 1  # Enable this joint
             self.low_cmd.motor_cmd[joint_idx].q = position_dict[joint_name]
             self.low_cmd.motor_cmd[joint_idx].dq = 0.0
             self.low_cmd.motor_cmd[joint_idx].kp = self.kp
