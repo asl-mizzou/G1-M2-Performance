@@ -118,6 +118,7 @@ class G1Conductor:
 
         # State tracking
         self.first_state_received = False
+        self.mode_machine = 0  # Track robot's control mode
 
         # Publishers and subscribers
         self.low_cmd_publisher = ChannelPublisher("rt/lowcmd", LowCmd_)
@@ -207,6 +208,7 @@ class G1Conductor:
     def _state_callback(self, msg: LowState_):
         """Callback to receive robot state"""
         self.low_state = msg
+        self.mode_machine = msg.mode_machine  # Track robot's mode
         if not self.first_state_received:
             self.first_state_received = True
 
@@ -326,7 +328,9 @@ class G1Conductor:
         # Set arm to target position
         self._set_arm_position(target_position)
 
-        # Calculate CRC and publish command
+        # Set mode fields and publish command
+        self.low_cmd.mode_pr = 0  # PR mode
+        self.low_cmd.mode_machine = self.mode_machine
         self.low_cmd.crc = self.crc.Crc(self.low_cmd)
         self.low_cmd_publisher.Write(self.low_cmd)
 
@@ -351,6 +355,8 @@ class G1Conductor:
             ratio = (time.time() - self.start_time) / init_duration
             target_pos = self._interpolate_positions(current_pos, self.beat4_position, ratio)
             self._set_arm_position(target_pos)
+            self.low_cmd.mode_pr = 0
+            self.low_cmd.mode_machine = self.mode_machine
             self.low_cmd.crc = self.crc.Crc(self.low_cmd)
             self.low_cmd_publisher.Write(self.low_cmd)
             time.sleep(self.control_dt)
@@ -394,6 +400,8 @@ class G1Conductor:
             ratio = (time.time() - start_time) / return_duration
             target_pos = self._interpolate_positions(current_pos, self.rest_position, ratio)
             self._set_arm_position(target_pos)
+            self.low_cmd.mode_pr = 0
+            self.low_cmd.mode_machine = self.mode_machine
             self.low_cmd.crc = self.crc.Crc(self.low_cmd)
             self.low_cmd_publisher.Write(self.low_cmd)
             time.sleep(self.control_dt)
@@ -401,6 +409,8 @@ class G1Conductor:
         # Disable arm SDK control
         self.low_cmd.motor_cmd[G1JointIndex.kNotUsedJoint].q = 0.0
 
+        self.low_cmd.mode_pr = 0
+        self.low_cmd.mode_machine = self.mode_machine
         self.low_cmd.crc = self.crc.Crc(self.low_cmd)
         self.low_cmd_publisher.Write(self.low_cmd)
 

@@ -98,6 +98,7 @@ class PositionTester:
 
         # State tracking
         self.first_state_received = False
+        self.mode_machine = 0  # Track robot's control mode
 
         # Publishers and subscribers
         self.low_cmd_publisher = ChannelPublisher("rt/lowcmd", LowCmd_)
@@ -161,6 +162,7 @@ class PositionTester:
     def _state_callback(self, msg: LowState_):
         """Callback to receive robot state"""
         self.low_state = msg
+        self.mode_machine = msg.mode_machine  # Track robot's mode
         if not self.first_state_received:
             self.first_state_received = True
 
@@ -228,6 +230,8 @@ class PositionTester:
 
     def _publish_command(self):
         """Publish the current command with CRC."""
+        self.low_cmd.mode_pr = 0  # PR mode
+        self.low_cmd.mode_machine = self.mode_machine  # Match robot's mode
         self.low_cmd.crc = self.crc.Crc(self.low_cmd)
         self.low_cmd_publisher.Write(self.low_cmd)
 
