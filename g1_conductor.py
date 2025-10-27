@@ -121,7 +121,7 @@ class G1Conductor:
         self.mode_machine = 0  # Track robot's control mode
 
         # Publishers and subscribers
-        self.low_cmd_publisher = ChannelPublisher("rt/lowcmd", LowCmd_)
+        self.low_cmd_publisher = ChannelPublisher("rt/arm_sdk", LowCmd_)  # ARM SDK channel!
         self.low_cmd_publisher.Init()
 
         self.low_state_subscriber = ChannelSubscriber("rt/lowstate", LowState_)
