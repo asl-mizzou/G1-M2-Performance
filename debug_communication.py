@@ -81,15 +81,33 @@ class DebugTester:
         print("TEST: Commanding simple elbow movement")
         print("="*60)
 
+        # Read ALL joint positions before
+        print("\nALL joint positions BEFORE movement:")
+        joints_to_check = list(range(0, 29))  # All joints
+        initial_all = {}
+        for joint in joints_to_check:
+            initial_all[joint] = self.low_state.motor_state[joint].q
+            if 15 <= joint <= 28:  # Arm joints
+                joint_name = f"Joint {joint}"
+                if joint == 15: joint_name = "L_ShoulderPitch"
+                elif joint == 16: joint_name = "L_ShoulderRoll"
+                elif joint == 17: joint_name = "L_ShoulderYaw"
+                elif joint == 18: joint_name = "L_Elbow"
+                elif joint == 22: joint_name = "R_ShoulderPitch"
+                elif joint == 23: joint_name = "R_ShoulderRoll"
+                elif joint == 24: joint_name = "R_ShoulderYaw"
+                elif joint == 25: joint_name = "R_Elbow (TARGET)"
+                elif joint == 26: joint_name = "R_WristRoll"
+                elif joint == 27: joint_name = "R_WristPitch"
+                elif joint == 28: joint_name = "R_WristYaw"
+                print(f"  {joint_name:20s} ({joint:2d}): {initial_all[joint]:7.3f} rad")
+
         # Read current elbow position
         initial_elbow = self.low_state.motor_state[25].q
         target_elbow = initial_elbow + 0.3  # Move 0.3 radians (~17 degrees)
 
-        print(f"Initial elbow position: {initial_elbow:.3f} rad")
-        print(f"Target elbow position:  {target_elbow:.3f} rad")
-        print(f"Movement: {target_elbow - initial_elbow:.3f} rad (~{(target_elbow - initial_elbow)*57.3:.1f} degrees)")
-
-        print("\nSending movement commands for 3 seconds...")
+        print(f"\nCommanding joint 25 to move from {initial_elbow:.3f} to {target_elbow:.3f} rad")
+        print("Sending movement commands for 3 seconds...")
         start_time = time.time()
         duration = 3.0
 
@@ -126,14 +144,35 @@ class DebugTester:
         # Check final position
         final_elbow = self.low_state.motor_state[25].q
         print(f"\n✓ Movement complete")
-        print(f"Final elbow position: {final_elbow:.3f} rad")
+        print(f"Joint 25 moved: {initial_elbow:.3f} → {final_elbow:.3f} rad")
         print(f"Expected: {target_elbow:.3f} rad")
         print(f"Error: {abs(final_elbow - target_elbow):.3f} rad")
 
+        # Check which OTHER joints moved
+        print("\nJoints that ACTUALLY moved:")
+        final_all = {}
+        for joint in joints_to_check:
+            final_all[joint] = self.low_state.motor_state[joint].q
+            delta = final_all[joint] - initial_all[joint]
+            if abs(delta) > 0.01:  # Moved more than 0.01 rad
+                joint_name = f"Joint {joint}"
+                if joint == 15: joint_name = "L_ShoulderPitch"
+                elif joint == 16: joint_name = "L_ShoulderRoll"
+                elif joint == 17: joint_name = "L_ShoulderYaw"
+                elif joint == 18: joint_name = "L_Elbow"
+                elif joint == 22: joint_name = "R_ShoulderPitch"
+                elif joint == 23: joint_name = "R_ShoulderRoll"
+                elif joint == 24: joint_name = "R_ShoulderYaw"
+                elif joint == 25: joint_name = "R_Elbow (COMMANDED)"
+                elif joint == 26: joint_name = "R_WristRoll"
+                elif joint == 27: joint_name = "R_WristPitch"
+                elif joint == 28: joint_name = "R_WristYaw"
+                print(f"  {joint_name:25s} ({joint:2d}): {initial_all[joint]:7.3f} → {final_all[joint]:7.3f}  (Δ {delta:+7.3f} rad)")
+
         if abs(final_elbow - target_elbow) < 0.1:
-            print("✓ Movement SUCCESSFUL!")
+            print("\n✓ Joint 25 reached target!")
         else:
-            print("✗ Movement FAILED - joint didn't move as expected")
+            print("\n✗ Joint 25 did NOT reach target")
 
         # Disable
         print("\nDisabling arm control...")
