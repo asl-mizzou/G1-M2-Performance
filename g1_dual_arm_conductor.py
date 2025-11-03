@@ -300,6 +300,53 @@ class DualArmConductor:
         print(f"Reached: {pose.name}")
         self.current_target = pose
 
+    def transition_to_sequence_start(self, new_sequence, transition_duration=0.5):
+        """
+        Smoothly transition from current position to first pose of new sequence
+
+        Args:
+            new_sequence: List of ConductingPose objects (the new sequence)
+            transition_duration: How long the transition takes in seconds
+        """
+        print(f"\n>>> TRANSITIONING to: {new_sequence[0].name}")
+
+        # Get current actual positions from robot state
+        current_pos = [self.low_state.motor_state[joint].q for joint in self.arm_joints]
+
+        # Target is the first pose of the new sequence
+        target_pose = new_sequence[0]
+
+        # Calculate number of steps for smooth interpolation
+        steps = int(transition_duration / self.control_dt)
+
+        # Enable arm SDK
+        self.low_cmd.motor_cmd[G1JointIndex.kNotUsedJoint].q = 1.0
+
+        # Smoothly interpolate from current position to first pose
+        for step in range(steps):
+            t = step / steps
+
+            # Blend from current position to first pose of new sequence
+            target_pos = interpolate_pose(
+                ConductingPose(current_pos, "current"),
+                target_pose,
+                t
+            )
+
+            # Send commands to all joints
+            for i, joint in enumerate(self.arm_joints):
+                self.low_cmd.motor_cmd[joint].tau = 0.0
+                self.low_cmd.motor_cmd[joint].q = target_pos[i]
+                self.low_cmd.motor_cmd[joint].dq = 0.0
+                self.low_cmd.motor_cmd[joint].kp = self.kp
+                self.low_cmd.motor_cmd[joint].kd = self.kd
+
+            self.low_cmd.crc = self.crc.Crc(self.low_cmd)
+            self.arm_sdk_publisher.Write(self.low_cmd)
+            time.sleep(self.control_dt)
+
+        print(f">>> TRANSITION COMPLETE! Starting new sequence.\n")
+
     def conduct_measures(self):
         """Execute the full conducting sequence"""
         print("\n" + "="*60)
@@ -312,26 +359,32 @@ class DualArmConductor:
         self.conducting = True
         current_measure = 1
         current_beat = 1
+        current_sequence = POSE_SEQUENCE  # Track which sequence we're using
+        transitioned_to_lt = False  # Flag to ensure we only transition once
 
         for eighth_note in range(self.total_eighths):
-            pose_index = eighth_note % 8
-
-            #add transitions to conducting speed
-            if current_measure <= 4:
-                input("Press Enter to Continue")
-                current_pose = POSE_SEQUENCE[pose_index]
-                next_pose = POSE_SEQUENCE[(pose_index + 1) % 8]
-            elif current_measure > 4:
-                input("Press Enter to Continue")
-                current_pose = LT_POSE_SEQUENCE[pose_index]
-                next_pose = LT_POSE_SEQUENCE[(pose_index + 1) % 8]
-
-            # Update measure and beat display
+            # Update measure and beat display FIRST (before sequence logic)
             if eighth_note % 2 == 0:  # On beat (not "and")
                 current_beat = (eighth_note // 2) % 4 + 1
                 if current_beat == 1 and eighth_note > 0:
                     current_measure += 1
                 print(f"Measure {current_measure} | Beat {current_beat}")
+
+            # Check if we need to transition to low tempo sequence
+            # Do this at the START of measure 5 (after we've completed measure 4)
+            if current_measure == 5 and not transitioned_to_lt and eighth_note % 8 == 0:
+                print("\n" + "="*60)
+                print("RHYTHM CHANGE: Switching to Low Tempo Sequence")
+                print("="*60)
+                self.transition_to_sequence_start(LT_POSE_SEQUENCE, transition_duration=1.0)
+                current_sequence = LT_POSE_SEQUENCE
+                transitioned_to_lt = True
+
+            pose_index = eighth_note % 8
+
+            # Use the current active sequence
+            current_pose = current_sequence[pose_index]
+            next_pose = current_sequence[(pose_index + 1) % 8]
 
             # Interpolate between current and next pose
             for step in range(self.steps_per_eighth):
