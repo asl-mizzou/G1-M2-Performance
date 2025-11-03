@@ -63,57 +63,62 @@ class ConductingPose:
 #        Waist(Yaw,Roll,Pitch)
 
 BEAT_1_DOWN = ConductingPose(
-    [0.00, 0.25, 0.00, 0.00, 1.50, 0.00, 0.00,
-     0.00, -0.25, 0.00, 0.00, -1.50, 0.00, 0.00,
+    [0.40, 0.25, 0.00, -0.40, 1.50, 0.00, 0.00,
+     0.40, -0.25, 0.00, -0.40, -1.50, 0.00, 0.00,
      0.00, 0.00, 0.00],
     "Beat 1 - Downbeat"
 )
 
 AND_1_UP = ConductingPose(
-    [-0.20, 0.25, 0.00, -0.20, 1.50, 0.00, 0.60,
-     -0.20, -0.25, 0.00, -0.20, -1.50, 0.00, -0.60,
+    [0.40, 0.25, 0.00, -0.80, 1.50, 0.00, 0.80,
+     0.40, -0.25, 0.00, -0.80, -1.50, 0.00, -0.80,
      0.00, 0.00, 0.00],
     "And 1 - Up"
 )
+'''
+[0.40, 0.25, -0.30, -0.35, 1.50, 0.00, 0.60,
+     0.40, -0.25, 0.30, -0.35, -1.50, 0.00, -0.60,
+     0.00, 0.00, 0.00],
+'''
 
 BEAT_2_DOWN = ConductingPose(
-    [0.00, 0.25, -0.30, 0.40, 1.50, 0.00, 0.60,
-     0.00, -0.25, 0.30, 0.40, -1.50, 0.00, -0.60,
+    [0.40, 0.25, 0.00, -0.40, 1.50, 0.00, 0.60,
+     0.40, -0.25, 0.00, -0.40, -1.50, 0.00, -0.60,
      0.00, 0.00, 0.00],
     "Beat 2 - Down"
 )
 
 AND_2_CENTER = ConductingPose(
-    [-0.20, 0.25, -0.30, -0.50, 1.20, 0.00, 0.60,
-     -0.20, -0.25, 0.30, -0.50, -1.20, 0.00, -0.60,
+    [0.40, 0.25, -0.40, -0.95, 1.20, 0.00, 0.40,
+     0.40, -0.25, 0.40, -0.95, -1.20, 0.00, -0.40,
      0.00, 0.00, 0.00],
     "And 2 - Center"
 )
 
 BEAT_3_DOWN = ConductingPose(
-    [0.00, 0.25, -0.30, 0.20, 1.20, 0.00, 0.60,
-     0.00, -0.25, 0.30, 0.20, -1.20, 0.00, -0.60,
+    [0.40, 0.25, 0.00, -0.40, 1.50, 0.00, 0.60,
+     0.40, -0.25, 0.00, -0.40, -1.50, 0.00, -0.60,
      0.00, 0.00, 0.00],
     "Beat 3 - Down"
 )
 
 AND_3_WIDE = ConductingPose(
-    [-0.30, 0.85, 0.30, 0.00, 0.80, 0.00, 0.80,
-     -0.30, -0.85, -0.30, 0.00, -0.80, 0.00, -0.80,
+    [0.40, 0.85, 0.80, -0.30, 0.80, 0.00, 0.90,
+     0.40, -0.85, -0.80, -0.30, -0.80, 0.00, -0.90,
      0.00, 0.00, 0.00],
     "And 3 - Wide"
 )
 
 BEAT_4_DOWN = ConductingPose(
-    [0.00, 0.25, 0.00, 0.00, 1.50, 0.00, 0.00,
-     0.00, -0.25, 0.00, 0.00, -1.50, 0.00, 0.00,
+    [0.40, 0.25, 0.00, -0.40, 1.50, 0.00, 0.00,
+     0.40, -0.25, 0.00, -0.40, -1.50, 0.00, 0.00,
      0.00, 0.00, 0.00],
     "Beat 4 - Down"
 )
 
 AND_4_PREP = ConductingPose(
-    [-0.50, 0.25, 0.00, -0.10, 1.50, 0.00, 0.70,
-     -0.50, -0.25, 0.00, -0.10, -1.50, 0.00, -0.70,
+    [0.40, 0.25, 0.00, -0.80, 1.50, 0.00, 0.80,
+     0.40, -0.25, 0.00, -0.80, -1.50, 0.00, -0.80,
      0.00, 0.00, 0.00],
     "And 4 - Prep"
 )
@@ -125,6 +130,37 @@ NEUTRAL_POSE = ConductingPose(
     "Neutral (Rest)"
 )
 
+##LOW Tempo Pose Sequesce
+LT_BEAT_1_DOWN = ConductingPose(
+    [0.40, 0.25, 0.00, -0.40, 1.50, 0.00, 0.60,
+     0.40, -0.25, 0.00, -0.40, -1.50, 0.00, -0.60,
+     0.00, 0.00, 0.00],
+    "Low Tempo Beat 1 - Down"
+)
+
+LT_AND_1_CENTER = ConductingPose(
+    [0.40, 0.25, -0.40, -0.95, 1.20, 0.00, 0.40,
+     0.40, -0.25, 0.40, -0.95, -1.20, 0.00, -0.40,
+     0.00, 0.00, 0.00],
+    "Low Tempo Beat 1 Center- Up"
+)
+
+LT_BEAT_2_DOWN = ConductingPose(
+    [0.40, 0.25, 0.00, -0.40, 1.50, 0.00, 0.60,
+     0.40, -0.25, 0.00, -0.40, -1.50, 0.00, -0.60,
+     0.00, 0.00, 0.00],
+    "Low Tempo Beat 2 - Down"
+)
+
+LT_AND_2_UP = ConductingPose(
+    [0.40, 0.25, 0.00, -0.80, 1.50, 0.00, 0.80,
+     0.40, -0.25, 0.00, -0.80, -1.50, 0.00, -0.80,
+     0.00, 0.00, 0.00],
+    "And 2 - Up"
+)
+
+
+
 # Sequence of poses for one complete measure (8 eighth notes)
 POSE_SEQUENCE = [
     BEAT_1_DOWN,    # Beat 1
@@ -135,6 +171,18 @@ POSE_SEQUENCE = [
     AND_3_WIDE,     # and
     BEAT_4_DOWN,    # Beat 4
     AND_4_PREP      # and
+]
+
+# LOW TEMPO Sequence of poses for one complete measure of low tempo(8 eighth notes)
+LT_POSE_SEQUENCE = [
+    LT_BEAT_1_DOWN,
+    LT_BEAT_1_DOWN,
+    LT_AND_1_CENTER,
+    LT_AND_1_CENTER,
+    LT_BEAT_2_DOWN,
+    LT_BEAT_2_DOWN,
+    LT_AND_2_UP,
+    LT_AND_2_UP
 ]
 
 def interpolate_pose(start: ConductingPose, end: ConductingPose, t: float) -> List[float]:
@@ -156,8 +204,8 @@ class DualArmConductor:
         self.total_eighths = self.total_beats * 2
 
         # Control parameters from C++ code
-        self.kp = 80.0
-        self.kd = 2.0
+        self.kp = 60.0
+        self.kd = 1.5
 
         # Communication
         self.low_cmd = unitree_hg_msg_dds__LowCmd_()
@@ -267,8 +315,16 @@ class DualArmConductor:
 
         for eighth_note in range(self.total_eighths):
             pose_index = eighth_note % 8
-            current_pose = POSE_SEQUENCE[pose_index]
-            next_pose = POSE_SEQUENCE[(pose_index + 1) % 8]
+
+            #add transitions to conducting speed
+            if current_measure <= 4:
+                input("Press Enter to Continue")
+                current_pose = POSE_SEQUENCE[pose_index]
+                next_pose = POSE_SEQUENCE[(pose_index + 1) % 8]
+            elif current_measure > 4:
+                input("Press Enter to Continue")
+                current_pose = LT_POSE_SEQUENCE[pose_index]
+                next_pose = LT_POSE_SEQUENCE[(pose_index + 1) % 8]
 
             # Update measure and beat display
             if eighth_note % 2 == 0:  # On beat (not "and")
